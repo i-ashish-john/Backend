@@ -1,4 +1,3 @@
-// authRepository.ts
 import User, { Iuser, IuserInput } from "../model/user";
 
 export const createUser = async (userData: IuserInput): Promise<Iuser> => {
@@ -17,6 +16,15 @@ export const findUserByEmail = async (email: string): Promise<Iuser | null> => {
         return await User.findOne({ email }).select('+password');
     } catch (error: any) {
         console.error('Error finding user:', error.message);
+        throw error;
+    }
+};
+
+export const findUserByUsername = async (username: string): Promise<Iuser | null> => {
+    try {
+        return await User.findOne({ username });
+    } catch (error: any) {
+        console.error('Error finding user by username:', error.message);
         throw error;
     }
 };

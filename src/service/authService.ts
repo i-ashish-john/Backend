@@ -1,5 +1,4 @@
-// authService.ts
-import { createUser, findUserByEmail } from "../repository/authRepository";
+import { createUser, findUserByEmail,findUserByUsername } from "../repository/authRepository";
 import { IuserInput, Iuser } from "../model/user";
 
 export const registerUser = async (userData: IuserInput): Promise<Iuser> => {
@@ -9,15 +8,22 @@ export const registerUser = async (userData: IuserInput): Promise<Iuser> => {
             throw new Error("Invalid user data provided");
         }
 
-        // Check if user already exists
-        const existingUser = await findUserByEmail(userData.email);
-        if (existingUser) {
-            throw new Error('Email already registered');
-        }
-
-        // Create new user
-        const newUser = await createUser(userData);
+               // email exist or not
+               const existingUserByEmail = await findUserByEmail(userData.email);
+               if (existingUserByEmail) {
+                   throw new Error('Email already registered');
+               }
+       
+               //  username  exists or not
+               const existingUserByUsername = await findUserByUsername(userData.username);
+               if (existingUserByUsername) {
+                   throw new Error('Username already taken');
+               }
+       
+        
+        const newUser = await createUser(userData);//(here creating user)
         return newUser;
+
     } catch (error: any) {
         throw new Error(error.message || 'Registration failed');
         //  console.error('Frontend error:', error.response?.data || error.message);
