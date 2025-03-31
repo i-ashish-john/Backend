@@ -5,7 +5,7 @@ import cors from "cors"
 
 import { connectDB } from "./config/db"
 
-import user from "./Routes/user"
+import user from "./Routes/patient/user"
 
 import dotenv from 'dotenv';
  
