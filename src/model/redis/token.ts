@@ -1,4 +1,3 @@
-// src/model/token.ts
 import mongoose from "mongoose";
 import { Schema, Document } from "mongoose";
 
@@ -30,7 +29,8 @@ const RefreshTokenSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// Index to auto-delete expired tokens
+//  autodelete expired tokens
 RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default mongoose.model<IRefreshToken>("refreshToken", RefreshTokenSchema);
+

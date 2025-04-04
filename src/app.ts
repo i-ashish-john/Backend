@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import { connectDB } from "./config/db";
-import userRoutes from "./Routes/patient/user";
+import userRoutes from "./Routes/patient/patientApi";
 // import doctorRoutes from "../src/Routes/doctor/doctor"; 
 // import adminRoutes from "./Routes/admin/admin";
 import { errorHandler } from "./middleware/errorMiddleware";
@@ -12,27 +12,24 @@ import { errorHandler } from "./middleware/errorMiddleware";
 dotenv.config();
 
 
-const app: Application = express();
+      const app: Application = express();
 
 
-app.use(express.json());
-app.use(cookieParser()); // For parsing cookies (refresh token)
+    app.use(express.json());
+    app.use(cookieParser()); // For parsing cookies (refresh token)
 
+                app.use(cors({
+                  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+                  credentials: true, 
+                  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                  allowedHeaders: ['Content-Type', 'Authorization']
+                }))
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true, 
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+      connectDB();
 
-
-connectDB();
-
-
-app.use("/api", userRoutes);
-// app.use("/api/doctor", doctorRoutes);
-// app.use("/api/admin", adminRoutes);
+            app.use("/api", userRoutes);
+          // app.use("/api/doctor", doctorRoutes);
+          // app.use("/api/admin", adminRoutes);
 
 
 app.use(errorHandler);

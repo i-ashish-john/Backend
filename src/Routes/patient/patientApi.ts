@@ -1,11 +1,8 @@
 import express from "express";
-import { 
-  signup, 
-  login, 
-  refreshToken, 
-  logout, 
-  getCurrentUser 
-} from "../../controller/authController";
+import { signup, login, refreshToken, 
+         logout, 
+    getCurrentUser} from "../../controller/patient/implementation/authController";
+
 import { authenticateJWT } from "../../middleware/authMiddleware";
 
 const router = express.Router();

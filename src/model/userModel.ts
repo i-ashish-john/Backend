@@ -1,4 +1,3 @@
-// src/model/user.ts
 import mongoose from "mongoose";
 import { Schema, Document } from "mongoose";
 

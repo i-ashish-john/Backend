@@ -1,13 +1,14 @@
-// src/repository/tokenRepository.ts
-import RefreshToken, { IRefreshTokenInput, IRefreshToken } from "../model/token";
+import RefreshToken, { IRefreshTokenInput, IRefreshToken } from "../model/redis/token";
 
 export const createRefreshToken = async (tokenData: IRefreshTokenInput): Promise<IRefreshToken> => {
   try {
-    const result = await RefreshToken.create(tokenData);
-    return result;
+      const result = await RefreshToken.create(tokenData);
+          return result
+
   } catch (error: any) {
-    console.error('Error creating refresh token:', error.message);
-    throw error;
+      console.error('Error creating refresh token:', error.message);
+          throw error
+
   }
 };
 

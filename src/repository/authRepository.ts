@@ -1,4 +1,4 @@
-import User, { Iuser, IuserInput } from "../model/user";
+import User, { Iuser, IuserInput } from "../model/userModel";
 import mongoose from "mongoose";
 
 export const createUser = async (userData: IuserInput): Promise<Iuser> => {

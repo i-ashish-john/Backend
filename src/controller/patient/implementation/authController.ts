@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { registerUser, loginUserService, generateTokens, verifyRefreshToken } from "../service/authService";
-import { createRefreshToken, deleteRefreshToken } from "../repository/tokenRepository";
+import { registerUser, loginUserService, generateTokens, verifyRefreshToken } from "../../../service/authService";
+import { createRefreshToken, deleteRefreshToken } from "../../../repository/tokenRepository";
 import mongoose from "mongoose";
-import { Iuser } from "../model/user";
+import { Iuser } from "../../../model/userModel";
 
 
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
@@ -22,19 +22,21 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     
     // Store refresh token in database
     await createRefreshToken({ userId: newUser._id as string | mongoose.Types.ObjectId, token: refreshToken });
-    
+    // in token Repository
     
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
-
-    return res.status(201).json({
+      maxAge: 7 * 24 * 60 * 60 * 1000
+                     // (7 days)
+    }); 
+   
+    // here giving access token to frontend
+    return res.status(201).json({ 
       success: true,
       message: 'User registered successfully',
-      accessToken,
+      accessToken,//here giving with result
       user: {
         id: newUser._id,
         username: newUser.username,
@@ -74,7 +76,6 @@ const { user, isPasswordValid }: { user: { _id: string | mongoose.Types.ObjectId
       });
     }
     
-    
     const { accessToken, refreshToken } = await generateTokens(user as Iuser);
     
     // Store refresh token in database
@@ -98,7 +99,8 @@ const { user, isPasswordValid }: { user: { _id: string | mongoose.Types.ObjectId
         email: user.email,
         role: user.role
       }
-    });
+    })
+    
   } catch (error: any) {
     console.error('Login controller error:', error.message);
     return res.status(500).json({
@@ -108,60 +110,63 @@ const { user, isPasswordValid }: { user: { _id: string | mongoose.Types.ObjectId
   }
 };
 
-export const refreshToken = async (req: Request, res: Response) => {
-  try {
-    // Get refresh token from cookie
-    const refreshToken = req.cookies.refreshToken;
-    
-    if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Refresh token required'
-      });
-    }
-    
-    const userData = await verifyRefreshToken(refreshToken) as Iuser;
-    
-    if (!userData) {
-      return res.status(403).json({
-        success: false,
-        message: 'Invalid refresh token'
-      });
-    }
-    
-    if (!userData) {
-      return res.status(403).json({
-        success: false,
-        message: 'Invalid refresh token'
-      });
-    }
-    
-   
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = await generateTokens(userData as Iuser);
-    
-    await deleteRefreshToken(refreshToken);
-    await createRefreshToken({ userId: userData._id as string | mongoose.Types.ObjectId, token: newRefreshToken });
-    
+//below is for checking the refreshtoken from the endpoint
+    export const refreshToken = async (req: Request, res: Response) => {
 
-    res.cookie('refreshToken', newRefreshToken, { //http only cookie storing
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
-    
-    return res.status(200).json({
-      success: true,
-      accessToken: newAccessToken
-    });
-  } catch (error: any) {
-    console.error('Refresh token error:', error.message);
-    return res.status(403).json({
-      success: false,
-      message: 'Invalid refresh token'
-    });
-  }
-};
+         try {
+        // Get refresh token from cookie
+        const refreshToken = req.cookies.refreshToken;
+          
+          if (!refreshToken) {
+            return res.status(401).json({
+              success: false,
+              message: 'Refresh token required'
+            });
+          }
+        
+        const userData = await verifyRefreshToken(refreshToken) as Iuser;
+        
+        if (!userData) {
+          return res.status(403).json({
+            success: false,
+            message: 'Invalid refresh token'
+          });
+        }
+        
+        if (!userData) {
+          return res.status(403).json({
+            success: false,
+            message: 'Invalid refresh token'
+          });
+        }
+        
+      
+ const { accessToken: newAccessToken, refreshToken: newRefreshToken } = await generateTokens(userData as Iuser);
+        
+       await deleteRefreshToken(refreshToken);
+     await createRefreshToken({ userId: userData._id as string | mongoose.Types.ObjectId, token: newRefreshToken });
+        
+
+     res.cookie('refreshToken', newRefreshToken, { //http only cookie storing
+         httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+         sameSite: 'strict',
+           maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+     });
+        
+        return res.status(200).json({
+          success: true,
+           accessToken: newAccessToken
+        })
+
+      } catch (error: any) {
+
+        console.error('Refresh token error:', error.message)
+
+     return res.status(403).json({ success: false , message: 'Invalid refresh token' })
+
+      }
+    };
 
 export const logout = async (req: Request, res: Response) => {
   try {

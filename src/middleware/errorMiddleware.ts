@@ -1,4 +1,3 @@
-// src/middleware/errorMiddleware.ts
 import { Request, Response, NextFunction } from "express";
 
 interface CustomError extends Error {
@@ -6,11 +5,10 @@ interface CustomError extends Error {
   errors?: any;
 }
 
-export const errorHandler = (
-  err: CustomError,
-  req: Request,
-  res: Response,
-  next: NextFunction
+export const errorHandler = (err: CustomError,
+                  req: Request,
+           res: Response,
+     next: NextFunction
 ) => {
   const statusCode = err.statusCode || 500;
   
@@ -19,5 +17,6 @@ export const errorHandler = (
     message: err.message || "Server Error",
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     errors: err.errors
-  });
+  })
+
 };

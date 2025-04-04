@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { createUser, findUserByEmail, findUserByUsername, findUserById } from "../repository/authRepository";
-import { IuserInput, Iuser } from "../model/user";
+import { IuserInput, Iuser } from "../model/userModel";
 import { findRefreshTokenByToken } from "../repository/tokenRepository";
 
 // JWT secrets should be in .env file
@@ -9,29 +9,26 @@ const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'your-access-secret-k
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
 export const registerUser = async (userData: IuserInput): Promise<Iuser> => {
+  
   try {
-    // Input validation
+
     if (!userData.username || !userData.email || !userData.password) {
       throw new Error("Invalid user data provided");
     }
 
-    // Check if email exists
-    const existingUserByEmail = await findUserByEmail(userData.email);
-    if (existingUserByEmail) {
-      throw new Error('Email already registered');
-    }
+        const existingUserByEmail = await findUserByEmail(userData.email);
+        if (existingUserByEmail) {
+          throw new Error('Email already registered');
+        }
 
-    // Check if username exists
     const existingUserByUsername = await findUserByUsername(userData.username);
     if (existingUserByUsername) {
-      throw new Error('Username already taken');
+        throw new Error('Username already taken');
     }
 
-    // Hash password before storing
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(userData.password, salt);
+      const salt = await bcrypt.genSalt(10);
+   const hashedPassword = await bcrypt.hash(userData.password, salt);
 
-    // Create user with hashed password
     const newUser = await createUser({
       ...userData,
       password: hashedPassword
@@ -70,24 +67,25 @@ export const generateTokens = async (user: Iuser) => {
       role: user.role || 'patient'
     };
     
-    // Generate access token (short-lived)
-    const accessToken = jwt.sign(
-      payload,
+   
+    const accessToken = jwt.sign(// creatign acess token
+      payload, 
       JWT_ACCESS_SECRET,
       { expiresIn: '15m' }
     );
     
-    // Generate refresh token (long-lived)
-    const refreshToken = jwt.sign(
+   
+    const refreshToken = jwt.sign( // refresh in 7 days
       payload,
       JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
-    );
-    
-    return { accessToken, refreshToken };
-  } catch (error: any) {
-    throw new Error(error.message || 'Token generation failed');
-  }
+    )
+
+    return { accessToken, refreshToken }
+
+    } catch (error: any) {
+        throw new Error(error.message || 'Token generation failed');
+    }
 };
 
 export const verifyAccessToken = async (token: string) => {
