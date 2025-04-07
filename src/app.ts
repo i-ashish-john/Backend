@@ -3,7 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import { connectDB } from "./config/db";
-import userRoutes from "./Routes/patient/patientApi";
+
+import { connectRedis } from "../src/config/redisConfig";
+
+import user from "../src/Routes/patient/patientApi";
 // import doctorRoutes from "../src/Routes/doctor/doctor"; 
 // import adminRoutes from "./Routes/admin/admin";
 import { errorHandler } from "./middleware/errorMiddleware";
@@ -25,9 +28,11 @@ dotenv.config();
                   allowedHeaders: ['Content-Type', 'Authorization']
                 }))
 
-      connectDB();
-
-            app.use("/api", userRoutes);
+          connectDB();
+        connectRedis();
+                
+      
+              app.use("/api", user);
           // app.use("/api/doctor", doctorRoutes);
           // app.use("/api/admin", adminRoutes);
 

@@ -1,224 +1,139 @@
 import { Request, Response, NextFunction } from "express";
-import { registerUser, loginUserService, generateTokens, verifyRefreshToken } from "../../../service/authService";
-import { createRefreshToken, deleteRefreshToken } from "../../../repository/tokenRepository";
-import mongoose from "mongoose";
-import { Iuser } from "../../../model/userModel";
-
+import { registerUser, loginUser, logoutUser, refreshAccessToken } from "../../../service/patient/authService";
 
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { username, email, password } = req.body;
+        
+        if (!username || !email || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Username, email, and password are required' 
+            });
+        }
 
-  try {
-    const { username, email, password } = req.body
-    if (!username || !email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Username, email, and password are required' 
-      });
-    }
+        const { user, accessToken, refreshToken } = await registerUser({ username, email, password });
+        
+        // Set refresh token in HTTP-only cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
 
-    const newUser = await registerUser({ username, email, password });
-    
-    const { accessToken, refreshToken } = await generateTokens(newUser);
-    
-    // Store refresh token in database
-    await createRefreshToken({ userId: newUser._id as string | mongoose.Types.ObjectId, token: refreshToken });
-    // in token Repository
-    
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-                     // (7 days)
-    }); 
-   
-    // here giving access token to frontend
-    return res.status(201).json({ 
-      success: true,
-      message: 'User registered successfully',
-      accessToken,//here giving with result
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role
-      }
-    })
-
+        return res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            data: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                accessToken
+            }
+        });
     } catch (error: any) {
-    console.error('Signup controller error:', error.message);
-
-      return res.status(400).json({ 
-         success: false, 
-        message: error.message || 'Registration failed' 
-      })
-
-  }
-
+        console.error('Signup controller error:', error.message);
+        return res.status(400).json({ 
+            success: false, 
+            message: error.message || 'Registration failed' 
+        });
+    }
 };
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required'
-      });
+    try {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and password are required' 
+            });
+        }
+
+        const { user, accessToken, refreshToken } = await loginUser(email, password);
+        
+        // Set refresh token in HTTP-only cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                accessToken
+            }
+        });
+    } catch (error: any) {
+        console.error('Login controller error:', error.message);
+        return res.status(400).json({ 
+            success: false, 
+            message: error.message || 'Login failed' 
+        });
     }
-    
-const { user, isPasswordValid }: { user: { _id: string | mongoose.Types.ObjectId; username: string; email: string; role: string } | null, isPasswordValid: boolean } = await loginUserService(email, password) as { user: { _id: string | mongoose.Types.ObjectId; username: string; email: string; role: string } | null, isPasswordValid: boolean };    
-    if (!user || !isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-    
-    const { accessToken, refreshToken } = await generateTokens(user as Iuser);
-    
-    // Store refresh token in database
-    await createRefreshToken({ userId: user._id, token: refreshToken });
-    
-    
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      accessToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    })
-    
-  } catch (error: any) {
-    console.error('Login controller error:', error.message);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Login failed'
-    });
-  }
 };
 
-//below is for checking the refreshtoken from the endpoint
-    export const refreshToken = async (req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get user ID from authenticated request
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Unauthorized' 
+            });
+        }
 
-         try {
+        await logoutUser(userId);
+        
+        res.clearCookie('refreshToken');
+
+        return res.status(200).json({
+            success: true,
+            message: 'Logout successful'
+        });
+    } catch (error: any) {
+        console.error('Logout controller error:', error.message);
+        return res.status(500).json({ 
+            success: false, 
+            message: error.message || 'Logout failed' 
+        });
+    }
+};
+
+export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
         // Get refresh token from cookie
         const refreshToken = req.cookies.refreshToken;
-          
-          if (!refreshToken) {
-            return res.status(401).json({
-              success: false,
-              message: 'Refresh token required'
+        
+        if (!refreshToken) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Refresh token not found' 
             });
-          }
-        
-        const userData = await verifyRefreshToken(refreshToken) as Iuser;
-        
-        if (!userData) {
-          return res.status(403).json({
-            success: false,
-            message: 'Invalid refresh token'
-          });
         }
-        
-        if (!userData) {
-          return res.status(403).json({
-            success: false,
-            message: 'Invalid refresh token'
-          });
-        }
-        
-      
- const { accessToken: newAccessToken, refreshToken: newRefreshToken } = await generateTokens(userData as Iuser);
-        
-       await deleteRefreshToken(refreshToken);
-     await createRefreshToken({ userId: userData._id as string | mongoose.Types.ObjectId, token: newRefreshToken });
-        
 
-     res.cookie('refreshToken', newRefreshToken, { //http only cookie storing
-         httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-         sameSite: 'strict',
-           maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-     });
-        
+        const newAccessToken = await refreshAccessToken(refreshToken);
+
         return res.status(200).json({
-          success: true,
-           accessToken: newAccessToken
-        })
-
-      } catch (error: any) {
-
-        console.error('Refresh token error:', error.message)
-
-     return res.status(403).json({ success: false , message: 'Invalid refresh token' })
-
-      }
-    };
-
-export const logout = async (req: Request, res: Response) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-    
-    if (refreshToken) {
-      
-      await deleteRefreshToken(refreshToken);
+            success: true,
+            message: 'Token refreshed successfully',
+            data: {
+                accessToken: newAccessToken
+            }
+        });
+    } catch (error: any) {
+        console.error('Token refresh controller error:', error.message);
+        return res.status(401).json({ 
+            success: false, 
+            message: error.message || 'Token refresh failed' 
+        });
     }
-    
-    
-    res.clearCookie('refreshToken');
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-  } catch (error: any) {
-    console.error('Logout error:', error.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Logout failed'
-    });
-  }
-};
-
-export const getCurrentUser = async (req: Request, res: Response) => {
-  try {
-    const user = req.user;
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-    
-    return res.status(200).json({
-      success: true,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt
-      }
-    });
-  } catch (error: any) {
-    console.error('Get current user error:', error.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get user data'
-    });
-  }
 };
