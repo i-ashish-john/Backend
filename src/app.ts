@@ -11,6 +11,7 @@ import user from "../src/Routes/patient/patientApi";
 // import adminRoutes from "./Routes/admin/admin";
 import { errorHandler } from "./middleware/errorMiddleware";
 
+import { morganLogger } from './middleware/loggerMiddleware';
 
 dotenv.config();
 
@@ -30,9 +31,16 @@ dotenv.config();
 
           connectDB();
         connectRedis();
-                
+
+                if (process.env.NODE_ENV === 'production') {
+                  app.use(morganLogger.prod);
+                } else {
+                  app.use(morganLogger.dev);
+                   // (enable when development)
+                //app.use(morganLogger.debug);
+                }
       
-              app.use("/api", user);
+            app.use("/api", user);
           // app.use("/api/doctor", doctorRoutes);
           // app.use("/api/admin", adminRoutes);
 
@@ -40,7 +48,7 @@ dotenv.config();
 app.use(errorHandler);
 
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT
 app.listen(PORT, () => console.log(`==>>>> Server running on port ${PORT}`));
 
 
