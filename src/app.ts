@@ -34,10 +34,10 @@ dotenv.config();
 
                 if (process.env.NODE_ENV === 'production') {
                   app.use(morganLogger.prod);
-                } else {
+                }else {
                   app.use(morganLogger.dev);
                    // (enable when development)
-                //app.use(morganLogger.debug);
+                  //app.use(morganLogger.debug);
                 }
       
             app.use("/api", user);

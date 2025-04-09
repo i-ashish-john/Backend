@@ -5,11 +5,7 @@ interface CustomError extends Error {
   errors?: any;
 }
 
-export const errorHandler = (err: CustomError,
-                  req: Request,
-           res: Response,
-     next: NextFunction
-) => {
+export const errorHandler = (err: CustomError, req: Request,res: Response,next: NextFunction) => {
   const statusCode = err.statusCode || 500;
   
   res.status(statusCode).json({
@@ -19,4 +15,4 @@ export const errorHandler = (err: CustomError,
     errors: err.errors
   })
 
-};
+}
