@@ -22,7 +22,11 @@ router.post('/refresh-token', (req, res, next) => authController.refresh(req, re
 
 router.get("/dashboard", authenticate,(req,res,next)=> authController.getDashboard(req, res, next));
 
-router.get('/me', authenticate, (req, res, next) => authController.getMe(req, res, next));
+router.get('/auth/me', authenticate, (req, res, next) => authController.getMe(req, res, next));
 
-
+// NEW ROUTES FOR PASSWORD RESET
+router.post('/forgotpassword', (req, res) => authController.forgotPassword(req, res));
+router.get('/auth/verifyresettoken', (req, res) => authController.verifyResetToken(req, res));
+//passing here after clicking the link
+router.post('/resetpassword', (req, res) => authController.resetPassword(req, res));
 export default router;

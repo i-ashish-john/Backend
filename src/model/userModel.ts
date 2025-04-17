@@ -1,30 +1,29 @@
-import mongoose from "mongoose";
-import { Schema, Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IuserInput {
   username: string;
   email: string;
   password: string;
-  role?: string;
 }
 
-export interface Iuser extends Document, IuserInput {
-  createdAt: Date;
-  updatedAt: Date;
+export interface Iuser extends Document {
+  username: string;
+  email: string;
+  password: string;
+  resetToken?: string; // Added for password reset
+  resetTokenExpiresAt?: Date; // Added for token expiration
 }
 
-const UserSchema: Schema = new Schema(
-  {
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: { 
-      type: String, 
-      enum: ['patient', 'doctor', 'admin'], 
-      default: 'patient' 
-    }
-  },
-  { timestamps: true }
-);
+const userSchema: Schema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true, select: false },
+  resetToken: { type: String }, // Store reset token
+  resetTokenExpiresAt: { type: Date },// Token expiration
+},
+ {
+  timestamps: true
+}
+ );
 
-export default mongoose.model<Iuser>("user", UserSchema);
+export default mongoose.model<Iuser>("User", userSchema);

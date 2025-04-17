@@ -5,7 +5,6 @@ const stream: StreamOptions = {
     write: (message) => console.log(message.trim()),
 };
 
-// Custom token to log API endpoint and method
 morgan.token('endpoint', (req: Request) => `${req.method} ${req.originalUrl}`);
 
 // Morgan middleware configuration

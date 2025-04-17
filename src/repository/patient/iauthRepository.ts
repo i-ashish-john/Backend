@@ -6,4 +6,8 @@ export interface IAuthRepository {
   findUserByUsername(username: string): Promise<Iuser | null>;
   findUserById(id: string): Promise<Iuser | null>;
   updateUser(id: string, updateData: Partial<IuserInput>): Promise<Iuser | null>;
+
+
+  updatePassword(id: string, hashedPassword: string): Promise<Iuser | null>;
+
 }
