@@ -234,43 +234,33 @@ export class AuthController implements IAuthController {
 async forgotPassword(req: Request, res: Response): Promise<Response> {
   try {
     const { email } = req.body;
-    console.log("------->>")
-    console.log("Reached-?");
-    
+
     if (!email) {
-      return res.status(HttpStatusCode.BAD_REQUEST).json({
-        success: false,
-        message: 'Email is required'
-      });
+      return res
+        .status(HttpStatusCode.BAD_REQUEST)
+        .json({ success: false, message: 'Email is required' });
     }
 
-
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000/patient/confirmpassword';
-    console.log('Frontend URL:', frontendUrl);
-
-    console.log(frontendUrl,'-<--')
-    // Request password reset and send email
+    const frontendUrl = 'http://localhost:3000/patient/confirmpassword';
     await this._passwordResetService.requestPasswordReset(email, frontendUrl);
-    
-    // Always return success, even if email doesn't exist (security best practice)
+
     return res.status(HttpStatusCode.OK).json({
       success: true,
-      message: 'If that email exists in our system, a password reset link has been sent'
+      message: 'Reset link sent (if that email exists)',
     });
-
   } catch (error: any) {
     console.error('Forgot password error:', error);
-    return res.status(error.statusCode || HttpStatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: error.message || 'Failed to process password reset request'
-    });
+    return res
+      .status(error.statusCode || HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: error.message });
   }
 }
+
 
 async verifyResetToken(req: Request, res: Response): Promise<Response> {
   try {
     const { token, email } = req.query;
-    
+    console.log("verifying reset token---->", token, email);
     if (!token || !email) {
       return res.status(HttpStatusCode.BAD_REQUEST).json({
         success: false,
@@ -304,7 +294,7 @@ async verifyResetToken(req: Request, res: Response): Promise<Response> {
 }
 
 async resetPassword(req: Request, res: Response): Promise<Response> {
-  try {
+  try {   
     const { token, email, password, confirmPassword } = req.body;
     
     if (!token || !email || !password || !confirmPassword) {
@@ -312,16 +302,12 @@ async resetPassword(req: Request, res: Response): Promise<Response> {
         success: false,
         message: 'Token, email, password, and confirm password are required'
       });
-    }
-    
-    if (password !== confirmPassword) {
+    }if (password !== confirmPassword) {
       return res.status(HttpStatusCode.BAD_REQUEST).json({
         success: false,
         message: 'Passwords do not match'
       });
-    }
-    
-    if (password.length < 8) {
+    } if (password.length < 8) {
       return res.status(HttpStatusCode.BAD_REQUEST).json({
         success: false,
         message: 'Password must be at least 8 characters long'

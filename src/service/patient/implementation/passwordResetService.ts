@@ -32,9 +32,12 @@ export class PasswordResetService {
       // console.log("user found ====",user)
       // console.log("email ====",email);
       if (!user) {
-        // For security reasons, don't reveal if email exists or not
-        return true;
+        throw {
+          message: 'No account found with that email',
+          statusCode: HttpStatusCode.NOT_FOUND
+        };
       }
+
       const userId = (user as { _id: { toString: () => string } })._id.toString();
       
       // Generate and store reset token
@@ -109,7 +112,6 @@ export class PasswordResetService {
   // Verify reset token
   async verifyResetToken(token: string, email: string): Promise<{valid: boolean, userId: string | null}> {
     try {
-      // Find user by email first
       const user = await this._authRepository.findUserByEmail(email);
       if (!user) {
         return { valid: false, userId: null };
