@@ -8,10 +8,10 @@ const redisClient = createClient({
     console.error('Redis Connection Error:', err);
   })
   
-  redisClient.on('connect', () => {
-    console.log('Redis Connected');
-  })
-  // Initializing connection
+  redisClient.connect()
+  .then(() => console.log('✅ Redis connected'))
+  .catch((err) => console.error('❌ Redis connection error', err));
+  
 const connectRedis = async (): Promise<void> => {
  try {
       console.log('redis connected')

@@ -3,15 +3,12 @@ import { ITokenRepository } from "../itokenRepository";
 import { redisClient } from '../../../config/redisConfig';
 
 export class TokenRepository implements ITokenRepository {
-  async storeRefreshToken(
-    userId: string,
-    refreshToken: string,
-    expiryInSeconds: number = 7 * 24 * 60 * 60 // 7 days
+  async storeRefreshToken(userId: string,refreshToken: string,expiryInSeconds: number = 7 * 24 * 60 * 60 // 7 days
   ): Promise<void> {
     try {
-      if (!redisClient.isOpen) {
-        await redisClient.connect(); // for connection security
-      }
+      // if (!redisClient.isOpen) {
+      //   await redisClient.connect(); // for connection security
+      // }
       console.log('Storing refresh token:', refreshToken);
       
       await redisClient.set(`refresh_token:${userId}`, refreshToken, {
@@ -80,4 +77,20 @@ export class TokenRepository implements ITokenRepository {
       throw error;
     }
   }
+
+
+  async storeSignupOtp(key: string, otp: string, ttl = 120) {
+    await redisClient.set(`signup_otp:${key}`, otp, { EX: ttl });
+  }
+  async getSignupOtp(key: string) {
+    return await redisClient.get(`signup_otp:${key}`);
+  }
+  async deleteSignupOtp(key: string) {
+    await redisClient.del(`signup_otp:${key}`);
+  }
+  // Also stash form data:
+  // await redisClient.set(`signup_data:${email}`, JSON.stringify({username,email,password}), { EX: 120 });
+  
 }
+
+

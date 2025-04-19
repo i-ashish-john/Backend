@@ -6,6 +6,10 @@ import {PasswordResetService}  from "../../../service/patient/implementation/pas
 
 import { AuthRepository } from "../../../repository/patient/implementation/authRepository";
 import { TokenRepository } from "../../../repository/patient/implementation/tokenRepository";
+import { redisClient } from "../../../config/redisConfig";
+import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
+
 
 
 export class AuthController implements IAuthController {
@@ -335,7 +339,156 @@ async resetPassword(req: Request, res: Response): Promise<Response> {
     });
   }
 }
+/////////
+async sendSignupOtp(req:Request, res:Response):Promise<Response> {
+  const { username, email, password } = req.body;
+  
+  const authRepo = new AuthRepository(); // Initialize authRepo
+  const tokenRepo = new TokenRepository(); // Initialize tokenRepo
+
+  if (!username||!email||!password)
+    return res.status(400).json({ success:false, message:"All fields required" });
+  if (await authRepo.findUserByEmail(email))
+    return res.status(400).json({ success:false, message:"Email taken" });
+  if (await authRepo.findUserByUsername(username))
+    return res.status(400).json({ success:false, message:"Username taken" });
+
+  const otp = Math.floor(100000 + Math.random()*900000).toString();
+  await tokenRepo.storeSignupOtp(email, otp);
+  await redisClient.set(`signup_data:${email}`, JSON.stringify({ username, email, password }), { EX: 120 });
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  await transporter.verify();
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: "Your HealSync signup code",
+    html: `<div style="font-size:2rem;color:#9333EA">${otp}</div>
+           <p>Expires in 2 minutes.</p>`
+  });
+
+  return res.json({ success: true, message: "OTP sent" });
+}
 
 
+async verifySignupOtp(req :Request, res:Response) {
+  const { email, code } = req.body;
+
+  const authRepo = new AuthRepository(); // Initialize authRepo
+  const tokenRepo = new TokenRepository(); // Initialize tokenRepo
+
+  if (!email||!code)
+    return res.status(400).json({ success:false, message:"email+code required" });
+
+  const stored = await tokenRepo.getSignupOtp(email);
+  if (stored !== code)
+    return res.status(400).json({ success:false, message:"Invalid or expired code" });
+
+  // pull userData → create user
+  const raw = await redisClient.get(`signup_data:${email}`);
+  if (!raw)
+    return res.status(400).json({ success:false, message:"Signup data expired" });
+
+  const { username, password } = JSON.parse(raw);
+  await authRepo.createUser({
+    username,
+    email,
+    password: await bcrypt.hash(password, 10)
+  });
+
+  // cleanup
+  await tokenRepo.deleteSignupOtp(email);
+  await redisClient.del(`signup_data:${email}`);
+
+  res.json({ success:true, message:"Signup complete!" });
 
 }
+
+async resendSignupOtp(req: Request, res: Response): Promise<Response> {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res
+        .status(HttpStatusCode.BAD_REQUEST)
+        .json({ success: false, message: "Email is required" });
+    }
+
+    const authRepo = new AuthRepository();
+    const tokenRepo = new TokenRepository();
+
+    const existingUser = await authRepo.findUserByEmail(email);
+    if (existingUser) {
+      return res
+        .status(HttpStatusCode.BAD_REQUEST)
+        .json({ success: false, message: "Email already registered, please log in" });
+    }
+
+    const signupData = await redisClient.get(`signup_data:${email}`);
+    if (!signupData) {
+      return res
+        .status(HttpStatusCode.BAD_REQUEST)
+        .json({ success: false, message: "Signup session expired, please start over" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await tokenRepo.storeSignupOtp(email, otp, 300); 
+    await redisClient.expire(`signup_data:${email}`, 300);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    await transporter.verify();
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: "Your HealSync signup code",
+      html: `<div style="font-size:2rem;color:#9333EA">${otp}</div>
+             <p>Expires in 5 minutes.</p>`,
+    });
+
+    return res
+      .status(HttpStatusCode.OK)
+      .json({ success: true, message: "OTP resent successfully" });
+  } catch (err: any) {
+    console.error("Resend OTP error:", err.message || err);
+    return res
+      .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: "Failed to resend OTP" });
+  }
+}
+
+}
+function next(err: any) {
+  throw new Error("Function not implemented.");
+} 
+
+
+
+
+
+function generateOtp(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a 6-digit OTP
+}
+
+
+function sendSignupOtpEmail(email: any, otp: any) {
+  throw new Error("Function not implemented.");
+}
+

@@ -5,6 +5,9 @@ import { AuthService } from '../../service/patient/implementation/authService';
 import { AuthRepository } from '../../repository/patient/implementation/authRepository';
 import { TokenRepository } from '../../repository/patient/implementation/tokenRepository';
 
+import { NextFunction } from "express";
+
+
 const router = express.Router();
 
 const authRepository = new AuthRepository();
@@ -24,9 +27,15 @@ router.get("/dashboard", authenticate,(req,res,next)=> authController.getDashboa
 
 router.get('/auth/me', authenticate, (req, res, next) => authController.getMe(req, res, next));
 
-// NEW ROUTES FOR PASSWORD RESET
+//password reset route 27-31
 router.post('/forgotpassword', (req, res) => authController.forgotPassword(req, res));
 router.get('/auth/verifyresettoken', (req, res) => authController.verifyResetToken(req, res));
 //passing here after clicking the link
 router.post('/resetpassword', (req, res) => authController.resetPassword(req, res));
+
+//signup otp
+router.post('/auth/send-signup-otp', (req, res) => authController.sendSignupOtp(req, res));
+router.post('/auth/verify-signup-otp', (req, res) => authController.verifySignupOtp(req, res));
+
+router.post("/auth/resend-signup-otp",(req, res) => authController.resendSignupOtp(req, res));
 export default router;

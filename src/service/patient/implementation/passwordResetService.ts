@@ -19,18 +19,17 @@ export class PasswordResetService {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  // Store reset token in Redis
   private async storeResetToken(userId: string, token: string): Promise<void> {
-    // Store for 1 hour (3600 seconds)
-    await this._tokenRepository.storeResetToken(userId, token, 3600);
+    await this._tokenRepository.storeResetToken(userId, token, 3600);//store for 1 hr
   }
 
+  private generateOtp(): string {//otp after signup
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
   // Request password reset
   async requestPasswordReset(email: string, frontendResetUrl: string): Promise<boolean> {
     try {
       const user = await this._authRepository.findUserByEmail(email);
-      // console.log("user found ====",user)
-      // console.log("email ====",email);
       if (!user) {
         throw {
           message: 'No account found with that email',
@@ -39,16 +38,12 @@ export class PasswordResetService {
       }
 
       const userId = (user as { _id: { toString: () => string } })._id.toString();
-      
-      // Generate and store reset token
-      const resetToken = this.generateToken();
-      await this.storeResetToken(userId, resetToken);
+      const resetToken = this.generateToken();//generating
+      await this.storeResetToken(userId, resetToken);//storing
       
       // Create reset URL
       const resetUrl = `${frontendResetUrl}?token=${resetToken}&email=${encodeURIComponent(email)}`;
-      
-      // Send email
-      await this.sendResetEmail(email, resetUrl);
+      await this.sendResetEmail(email, resetUrl);//send email
       
       return true;
     } catch (error: any) {
@@ -108,6 +103,30 @@ export class PasswordResetService {
       };
     }
   }
+// for otp after signuup 
+private async sendEmail(
+  to: string,
+  subject: string,
+  html: string
+): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  await transporter.verify();
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to,
+    subject,
+    html,
+  });
+}
 
   // Verify reset token
   async verifyResetToken(token: string, email: string): Promise<{valid: boolean, userId: string | null}> {
@@ -159,10 +178,9 @@ export class PasswordResetService {
         };
       }
       
-      // Delete the reset token
-      await this._tokenRepository.deleteResetToken(userId);
-      
+      await this._tokenRepository.deleteResetToken(userId);//deleting the reset token//
       return true;
+
     } catch (error: any) {
       console.error('Password reset error:', error);
       throw {
@@ -171,4 +189,34 @@ export class PasswordResetService {
       };
     }
   }
+  
+  // Generate OTP for signup
+async sendSignupOtp(email: string): Promise<void> {
+  const user = await this._authRepository.findUserByEmail(email);
+  if (!user) throw { message: "No such user", statusCode: 404 };
+
+  const userId = (user._id as any).toString();
+  const otp = this.generateOtp();
+  
+  await this._tokenRepository.storeResetToken(`signup_otp:${userId}`, otp, 120);
+
+  // send via email
+  const html = `
+    <h1>Your HealSync signup code</h1>
+    <p>Enter this code on the website to finish signing up:</p>
+    <div style="font-size:2rem; font-weight:bold; color:#9333EA;">${otp}</div>
+    <p>It expires in 2 minutes.</p>`;
+  await this.sendEmail(email, "Your signup code", html);
 }
+ 
+
+async verifySignupOtp(userId: string, code: string): Promise<boolean> {
+  const stored = await this._tokenRepository.getResetToken(`signup_otp:${userId}`);
+  if (stored === code) {
+    await this._tokenRepository.deleteResetToken(`signup_otp:${userId}`);
+    return true;
+  }
+  return false;
+}
+}
+//otp after signup
