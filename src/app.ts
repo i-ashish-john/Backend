@@ -7,6 +7,8 @@ import { connectDB } from "./config/db";
 import { connectRedis } from "../src/config/redisConfig";
 
 import user from "../src/Routes/patient/patientApi";
+import doctor from "../src/Routes/doctor/doctorApi";
+
 // import doctorRoutes from "../src/Routes/doctor/doctor"; 
 // import adminRoutes from "./Routes/admin/admin";
 import { errorHandler } from "./middleware/errorMiddleware";
@@ -41,7 +43,7 @@ dotenv.config();
                 }
       
             app.use("/api", user);
-          // app.use("/api/doctor", doctorRoutes);
+          app.use("/api/doctor", doctor);
           // app.use("/api/admin", adminRoutes);
 
 

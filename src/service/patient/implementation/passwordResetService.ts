@@ -202,7 +202,7 @@ async sendSignupOtp(email: string): Promise<void> {
 
   // send via email
   const html = `
-    <h1>Your HealSync signup code</h1>
+    <h1>Hello your HealSync signup code</h1>
     <p>Enter this code on the website to finish signing up:</p>
     <div style="font-size:2rem; font-weight:bold; color:#9333EA;">${otp}</div>
     <p>It expires in 2 minutes.</p>`;

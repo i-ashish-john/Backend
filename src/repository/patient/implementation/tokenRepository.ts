@@ -80,13 +80,40 @@ export class TokenRepository implements ITokenRepository {
 
 
   async storeSignupOtp(key: string, otp: string, ttl = 120) {
-    await redisClient.set(`signup_otp:${key}`, otp, { EX: ttl });
+    try {
+      
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
+      await redisClient.set(`signup_otp:${key}`, otp, { EX: ttl });
+    } catch (error: any) {
+      console.error('Error storing signup OTP:', error.message);
+      throw error;
+    }
   }
+  
   async getSignupOtp(key: string) {
-    return await redisClient.get(`signup_otp:${key}`);
+    try {
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
+      return await redisClient.get(`signup_otp:${key}`);
+    } catch (error: any) {
+      console.error('Error retrieving signup OTP:', error.message);
+      throw error;
+    }
   }
+  
   async deleteSignupOtp(key: string) {
-    await redisClient.del(`signup_otp:${key}`);
+    try {
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
+      await redisClient.del(`signup_otp:${key}`);
+    } catch (error: any) {
+      console.error('Error deleting signup OTP:', error.message);
+      throw error;
+    }
   }
   // Also stash form data:
   // await redisClient.set(`signup_data:${email}`, JSON.stringify({username,email,password}), { EX: 120 });

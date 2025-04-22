@@ -8,4 +8,5 @@ export interface ITokenRepository {
   storeResetToken(userId: string, resetToken: string, expiryInSeconds?: number): Promise<void>;
   getResetToken(userId: string): Promise<string | null>;
   deleteResetToken(userId: string): Promise<void>;
+  
 }

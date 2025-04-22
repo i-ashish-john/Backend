@@ -192,6 +192,7 @@ export class AuthController implements IAuthController {
         message: "User details retrieved successfully",
         data: { userId },
       });
+      
     } catch (error: any) {
       console.error("Get current user error:", error.message);
       return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
@@ -354,8 +355,8 @@ async sendSignupOtp(req:Request, res:Response):Promise<Response> {
     return res.status(400).json({ success:false, message:"Username taken" });
 
   const otp = Math.floor(100000 + Math.random()*900000).toString();
-  await tokenRepo.storeSignupOtp(email, otp);
-  await redisClient.set(`signup_data:${email}`, JSON.stringify({ username, email, password }), { EX: 120 });
+  await tokenRepo.storeSignupOtp(email, otp,120);
+  await redisClient.set(`signup_data:${email}`, JSON.stringify({ username, email, password }), { EX: 420 });
 
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -373,7 +374,7 @@ async sendSignupOtp(req:Request, res:Response):Promise<Response> {
     to: email,
     subject: "Your HealSync signup code",
     html: `<div style="font-size:2rem;color:#9333EA">${otp}</div>
-           <p>Expires in 2 minutes.</p>`
+           <p>Expires in 2 minutes.</p>`
   });
 
   return res.json({ success: true, message: "OTP sent" });
@@ -436,13 +437,18 @@ async resendSignupOtp(req: Request, res: Response): Promise<Response> {
     if (!signupData) {
       return res
         .status(HttpStatusCode.BAD_REQUEST)
-        .json({ success: false, message: "Signup session expired, please start over" });
+        .json({ success: false, message: "Signup session expired, please singup again" });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Delete any existing OTP for this email
+    await tokenRepo.deleteSignupOtp(email);
 
-    await tokenRepo.storeSignupOtp(email, otp, 300); 
-    await redisClient.expire(`signup_data:${email}`, 300);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    const expirationTime = 120; // 5 minutes
+    
+    await tokenRepo.storeSignupOtp(email, otp, expirationTime); 
+    await redisClient.expire(`signup_data:${email}`, 420);
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -460,7 +466,7 @@ async resendSignupOtp(req: Request, res: Response): Promise<Response> {
       to: email,
       subject: "Your HealSync signup code",
       html: `<div style="font-size:2rem;color:#9333EA">${otp}</div>
-             <p>Expires in 5 minutes.</p>`,
+             <p>Expires in 5 minutes.</p>`
     });
 
     return res
@@ -473,22 +479,5 @@ async resendSignupOtp(req: Request, res: Response): Promise<Response> {
       .json({ success: false, message: "Failed to resend OTP" });
   }
 }
-
-}
-function next(err: any) {
-  throw new Error("Function not implemented.");
-} 
-
-
-
-
-
-function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a 6-digit OTP
-}
-
-
-function sendSignupOtpEmail(email: any, otp: any) {
-  throw new Error("Function not implemented.");
 }
 
