@@ -33,4 +33,8 @@ export interface IDoctorService {
   sendSignupOTP(email: string, formData: SignupData): Promise<OtpResponse>;
   resendSignupOTP(email: string): Promise<OtpResponse>;
   verifySignupOTP(email: string, otp: string): Promise<AuthResponse>;
+
+  sendResetToken(email: string): Promise<void>;
+  resetPassword(email: string, token: string, newPassword: string): Promise<void>;
+
 }

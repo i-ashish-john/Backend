@@ -1,6 +1,7 @@
 import { IDoctor } from '../../model/doctorModel';
 
 export interface IDoctorRepository {
+  updatePassword(arg0: string, hashed: string): unknown;
   findByEmail(email: string): Promise<IDoctor | null>;
   // findByLicense(licenseNumber: string): Promise<IDoctor | null>;
   findById(id: string): Promise<IDoctor | null>;

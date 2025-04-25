@@ -23,4 +23,6 @@ router.post('/send-otp', (req, res) => doctorController.sendSignupOTP(req, res))
 router.post('/resend-otp', (req, res) => doctorController.resendSignupOTP(req, res));
 router.post('/verify-otp', (req, res) => doctorController.verifySignupOTP(req, res));
 
+router.post('/forgot-password', (req, res) => doctorController.forgotPassword(req, res));
+router.post('/reset-password', (req, res) => doctorController.resetPassword(req, res));
 export default router;

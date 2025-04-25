@@ -3,6 +3,7 @@ import { IDoctor } from '../../../model/doctorModel';
 import Doctor from '../../../model/doctorModel'; // MongoDB model
 
 export class DoctorRepository implements IDoctorRepository {
+
   async findByEmail(email: string): Promise<IDoctor | null> {
     return await Doctor.findOne({ email }).exec();
   }
@@ -19,4 +20,9 @@ export class DoctorRepository implements IDoctorRepository {
     const newDoctor = new Doctor(doctor);
     return await newDoctor.save();
   }
+  
+  async updatePassword(id: string, hashed: string): Promise<void> {
+    await Doctor.findByIdAndUpdate(id, { password: hashed }).exec();
+  }
+  
 }

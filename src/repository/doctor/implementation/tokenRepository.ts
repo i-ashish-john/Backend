@@ -2,6 +2,21 @@ import { ITokenRepository } from "../itokenRepository";
 import { redisClient } from '../../../config/redisConfig';
 
 export class TokenRepository implements ITokenRepository {
+
+                                                      // 5 minutes default
+async storeResetToken(userId: string,token: string,expiryInSeconds: number = 5 * 60 
+  ): Promise<void> {
+    await redisClient.set(`reset_token:${userId}`, token, { EX: expiryInSeconds });
+  }
+
+  async getResetToken(userId: string): Promise<string | null> {
+    return await redisClient.get(`reset_token:${userId}`);
+  }
+
+  async deleteResetToken(userId: string): Promise<void> {
+    await redisClient.del(`reset_token:${userId}`);
+  }
+  //-------------------------//---------------//-----------
   async storeRefreshToken(userId: string, refreshToken: string, expiryInSeconds: number = 7 * 24 * 60 * 60): Promise<void> {
     try {
       await redisClient.set(`doctor_refresh_token:${userId}`, refreshToken, { EX: expiryInSeconds });
