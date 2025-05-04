@@ -287,9 +287,11 @@ export class DoctorService implements IDoctorService {
   async resetPassword(email: string, token: string, newPassword: string): Promise<void> {
     const doctor = await this.doctorRepository.findByEmail(email);
     if (!doctor) throw new Error('Doctor not found');
-    const stored = await this.tokenRepository.getResetToken(doctor._id.toString());
-    if (stored !== token) throw new Error('Invalid or expired token');
-    // hash + update
+  
+    const storedToken = await this.tokenRepository.getResetToken(doctor._id.toString());
+    if (!storedToken) throw new Error('Token has expired');
+    if (storedToken !== token) throw new Error('Invalid token');
+  
     const hashed = await bcrypt.hash(newPassword, 10);
     await this.doctorRepository.updatePassword(doctor._id.toString(), hashed);
     await this.tokenRepository.deleteResetToken(doctor._id.toString());

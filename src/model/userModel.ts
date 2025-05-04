@@ -10,14 +10,35 @@ export interface Iuser extends Document {
   username: string;
   email: string;
   password: string;
-  resetToken?: string; // Added for password reset
-  resetTokenExpiresAt?: Date; // Added for token expiration
+  role: 'patient' | 'doctor' | 'admin'; 
+
+  resetToken?: string; //password reset
+  resetTokenExpiresAt?: Date; 
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const userSchema: Schema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true, select: false },
+
+  username: {  type: String,
+               required: true,
+               unique: true 
+             },
+
+  email: {  type: String,
+            required: true,
+            unique: true 
+        },
+
+  password:{ type: String,
+            required: true,
+            select: false
+         },
+
+  role: {  type: String, 
+           enum: ['patient', 'doctor', 'admin'],
+           default: 'patient'// Default role
+         }, 
   resetToken: { type: String }, // Store reset token
   resetTokenExpiresAt: { type: Date },// Token expiration
 },
@@ -27,3 +48,4 @@ const userSchema: Schema = new mongoose.Schema({
  );
 
 export default mongoose.model<Iuser>("User", userSchema);
+

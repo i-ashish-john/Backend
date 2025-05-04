@@ -5,6 +5,8 @@ import { AuthService } from '../../service/patient/implementation/authService';
 import { AuthRepository } from '../../repository/patient/implementation/authRepository';
 import { TokenRepository } from '../../repository/patient/implementation/tokenRepository';
 
+import verifyRole from '../../middleware/roleCheck'
+
 import { NextFunction } from "express";
 
 
@@ -20,13 +22,12 @@ const authController = new AuthController(authService);
 // Auth routes
 router.post('/signup', (req, res, next) => authController.signup(req, res, next));
 router.post('/login', (req, res, next) => authController.login(req, res, next));
-router.post('/logout', authenticate, (req, res, next) => authController.logout(req, res, next));
+router.post('/auth/logout', authenticate, (req, res, next) => authController.logout(req, res, next));
 router.post('/refresh-token', (req, res, next) => authController.refresh(req, res, next));
 
-router.get("/dashboard", authenticate,(req,res,next)=> authController.getDashboard(req, res, next));
+router.get("/dashboard", authenticate,verifyRole(['patient']),(req,res,next)=> authController.getDashboard(req, res, next));
 
 router.get('/auth/me', authenticate, (req, res, next) => authController.getMe(req, res, next));
-
 //password reset route 27-31
 router.post('/forgotpassword', (req, res) => authController.forgotPassword(req, res));
 router.get('/auth/verifyresettoken', (req, res) => authController.verifyResetToken(req, res));

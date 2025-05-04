@@ -11,6 +11,7 @@ const doctorRepository = new DoctorRepository(); // Create an instance of the re
 const tokenRepository = new TokenRepository();
 
 const doctorService = new DoctorService(doctorRepository, tokenRepository);
+
 const doctorController = new DoctorController(doctorService);
 
 router.post('/signup', (req, res) => doctorController.signup(req, res));

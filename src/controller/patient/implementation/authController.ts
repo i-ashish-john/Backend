@@ -46,6 +46,7 @@ export class AuthController implements IAuthController {
           email: user.email,
         }
       });
+      
     } catch (error: any) {
       console.error('Signup controller error:', error.message);
       return res.status(HttpStatusCode.BAD_REQUEST).json({ 
@@ -57,6 +58,7 @@ export class AuthController implements IAuthController {
 
   async login(req: Request, res: Response, next: NextFunction): Promise<Response> {
     try {
+      
       const { email, password } = req.body;
       
       if (!email || !password) {
@@ -67,15 +69,17 @@ export class AuthController implements IAuthController {
       }
 
       const { user, accessToken, refreshToken } = await this._authService.loginUser(email, password);
-      console.log('THE DETAILS ------>>>>>>>>>>>>>>>>>>>>>>', user, accessToken, refreshToken);
       
+      console.log('THE DETAILS ------>>>>>>>>>>>>>>>>>>>>>>', user, accessToken, refreshToken);
+      console.log('Login details:', { id: user._id, role: user.role });
+
       if (!user) {
         return res.status(HttpStatusCode.UNAUTHORIZED).json({ 
           success: false, 
           message: 'Invalid email or password' 
         });
       }
-      // Set cookies for access and refresh tokens
+      
       res.cookie('userId', user._id, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'development',
@@ -85,13 +89,13 @@ export class AuthController implements IAuthController {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'development',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000 // (24 hrs)
       });
       
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'development',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000 //(7 days)
       });
       
       return res.status(HttpStatusCode.OK).json({
@@ -101,6 +105,7 @@ export class AuthController implements IAuthController {
           id: user._id,
           username: user.username,
           email: user.email,
+          role: user.role,
           accessToken: accessToken // Include token in response body as well
         }
       });
@@ -115,6 +120,8 @@ export class AuthController implements IAuthController {
 
   async logout(req: Request, res: Response, next: NextFunction): Promise<Response> {
     try {
+      console.log('reached IN THE LOGOUT ____');
+      
       const userId = req.user?.id; // Get user ID from auth middleware from req.user
       if (!userId) {
         return res.status(HttpStatusCode.UNAUTHORIZED).json({ 
@@ -122,9 +129,7 @@ export class AuthController implements IAuthController {
           message: 'Unauthorized' 
         });
       }
-
       await this._authService.logoutUser(userId);
-      // Clear cookies
       res.clearCookie('accessToken');
       res.clearCookie('refreshToken');
 
@@ -132,6 +137,7 @@ export class AuthController implements IAuthController {
         success: true,
         message: 'Logout successful'
       });
+
     } catch (error: any) {
       console.error('Logout controller error:', error.message);
       return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ 
@@ -144,6 +150,7 @@ export class AuthController implements IAuthController {
   async refresh(req: Request, res: Response, next: NextFunction): Promise<Response> {
     try {
       const refreshToken = req.cookies.refreshToken;  
+      
       if (!refreshToken) {
         return res.status(HttpStatusCode.UNAUTHORIZED).json({ 
           success: false, 
@@ -181,24 +188,16 @@ export class AuthController implements IAuthController {
       console.log("Reached /auth/me with user:", req.user);
       const userId = req.user?.id;
       if (!userId) {
-        return res.status(HttpStatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: "Unauthorized access",
-        });
+        return res.status(HttpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized access" });
       }
-  
       return res.status(HttpStatusCode.OK).json({
         success: true,
         message: "User details retrieved successfully",
         data: { userId },
       });
-      
     } catch (error: any) {
       console.error("Get current user error:", error.message);
-      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: error.message || "Failed to retrieve user details",
-      });
+      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message || "Failed to retrieve user details" });
     }
   }
 
@@ -211,7 +210,6 @@ export class AuthController implements IAuthController {
           message: 'Unauthorized access'
         });
       }
-      // For now, returning sample dashboard data
       return res.status(HttpStatusCode.OK).json({
         success: true,
         message: 'Dashboard data retrieved successfully',

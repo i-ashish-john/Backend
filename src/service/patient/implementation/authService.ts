@@ -17,10 +17,9 @@ export class AuthService implements IAuthService {
     this._tokenRepository = tokenRepository;
   }
 
-  private generateAccessToken(userId: string): string {
-    console.log('Generating access token for userId:', userId);
+  private generateAccessToken(user: Iuser): string {
     return jwt.sign(
-      { userId },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_ACCESS_SECRET as string,
       { expiresIn: '15m' }
     );
@@ -65,15 +64,16 @@ export class AuthService implements IAuthService {
 
       const newUser: Iuser = await this._authRepository.createUser({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword // creatin role also defaultly
       });
       // (newUser._id as string)
-      const accessToken = this.generateAccessToken((newUser._id as string).toString());
+      const accessToken = this.generateAccessToken(newUser);
       const refreshToken = this.generateRefreshToken((newUser._id as string).toString());
 
-      await this._tokenRepository.storeRefreshToken((newUser._id as string).toString(), refreshToken);
+      await this._tokenRepository.storeRefreshToken((newUser._id as string).toString(),(newUser.username as string).toString(), refreshToken);
 
       return { user: newUser, accessToken, refreshToken };
+
     } catch (error: any) {
       if (error.statusCode) {
         throw error;
@@ -104,12 +104,13 @@ export class AuthService implements IAuthService {
         };
       }
 
-      const accessToken = this.generateAccessToken((user._id as string).toString());
+      const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken((user._id as string).toString());
 
-      await this._tokenRepository.storeRefreshToken((user._id as string).toString(), refreshToken);
+      await this._tokenRepository.storeRefreshToken((user._id as string).toString(), (user.username as string).toString(),refreshToken);
 
       return { user, accessToken, refreshToken };
+      
     } catch (error: any) {
       if (error.statusCode) {
         throw error;
@@ -145,7 +146,15 @@ export class AuthService implements IAuthService {
         };
       }
 
-      return this.generateAccessToken(decoded.userId);
+      const user = await this._authRepository.findUserById(decoded.userId) as Iuser;
+      if (!user) {
+        throw { 
+          message: 'User not found (from authService)', 
+          statusCode: HttpStatusCode.UNAUTHORIZED 
+        };
+      }
+      return this.generateAccessToken(user);
+
     } catch (error: any) {
       if (error.statusCode) {
         throw error;
@@ -155,6 +164,9 @@ export class AuthService implements IAuthService {
           statusCode: HttpStatusCode.INTERNAL_SERVER_ERROR 
         };
       }
+
     }
+
   }
+
 }

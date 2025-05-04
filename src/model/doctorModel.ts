@@ -5,6 +5,7 @@ export interface IDoctor extends Document {
   email: string;
   password: string;
   _id: string;
+  role: 'doctor';
   // specialization: string;
   // licenseNumber: string;
   // phoneNumber?: string;
@@ -17,6 +18,7 @@ const DoctorSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-});
+  role: { type: String, enum: ['doctor'], default: 'doctor' }, // Default role for doctors
+}, { timestamps: true });
 
 export default mongoose.model<IDoctor>('Doctor', DoctorSchema);

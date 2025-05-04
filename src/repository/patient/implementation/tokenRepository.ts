@@ -2,18 +2,19 @@
 import { ITokenRepository } from "../itokenRepository";
 import { redisClient } from '../../../config/redisConfig';
 
-export class TokenRepository implements ITokenRepository {
-  async storeRefreshToken(userId: string,refreshToken: string,expiryInSeconds: number = 7 * 24 * 60 * 60 // 7 days
-  ): Promise<void> {
+export class TokenRepository implements ITokenRepository {                              // 7 days
+  async storeRefreshToken(userId: string,username:string,refreshToken: string,expiryInSeconds: number = 7 * 24 * 60 * 60 ): Promise<void> {
     try {
       // if (!redisClient.isOpen) {
       //   await redisClient.connect(); // for connection security
       // }
+
       console.log('Storing refresh token:', refreshToken);
       
-      await redisClient.set(`refresh_token:${userId}`, refreshToken, {
+      await redisClient.set(`refresh_token:${username}`, refreshToken, {
         EX: expiryInSeconds
       });
+        
     } catch (error: any) {
       console.error('Error storing refresh token:', error.message);
       throw error;

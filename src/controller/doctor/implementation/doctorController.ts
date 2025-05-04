@@ -1,6 +1,14 @@
 import { Request, Response } from 'express';
 import { IDoctorController } from '../../../controller/doctor/idoctorController';
+
 import { DoctorService } from '../../../service/doctor/implementation/doctorService'; 
+
+import { DoctorRepository } from '../../../repository/doctor/implementation/doctorRepository';
+import { IDoctorRepository } from '../../../repository/doctor/idoctorRepository';
+
+import { TokenRepository } from '../../../repository/doctor/implementation/tokenRepository';
+import { ITokenRepository } from '../../../repository/doctor/itokenRepository';
+
 import { doctorSignupSchema } from '../../../lib/validations/doctorValidation'; 
 import {redisClient} from '../../../config/redisConfig'; 
 import { HttpStatusCode } from '../../../config/ HttpStatusCode.enum';
@@ -9,7 +17,9 @@ export class DoctorController implements IDoctorController {
   private doctorService: DoctorService;
 
   constructor(doctorService: DoctorService) {
-    this.doctorService = doctorService;
+    const doctorRepository: IDoctorRepository = new DoctorRepository();
+    const tokenRepository: ITokenRepository = new TokenRepository();
+    this.doctorService = new DoctorService(doctorRepository, tokenRepository);
   }
 
   async signup(req: Request, res: Response): Promise<void> {
@@ -160,18 +170,48 @@ export class DoctorController implements IDoctorController {
 
   async resetPassword(req: Request, res: Response): Promise<void> {
     try {
+      // Extract data from the request body
       const { email, token, newPassword } = req.body;
+
+      // Validate input
       if (!email || !token || !newPassword) {
-        res.status(HttpStatusCode.BAD_REQUEST).json({ success: false, message: 'Missing fields' });
-        return
+        res.status(HttpStatusCode.BAD_REQUEST).json({
+          success: false,
+          message: 'Email, token, and new password are required',
+        });
+        return;
       }
+
+      // Call the service to reset the password
       await this.doctorService.resetPassword(email, token, newPassword);
-      res.status(HttpStatusCode.OK).json({ success: true, message: 'Password updated successfully' });
-    } catch (err: any) {
-      res.status(HttpStatusCode.BAD_REQUEST).json({ success: false, message: err.message });
+
+      // Send success response
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        message: 'Password reset successfully',
+      });
+    } catch (error: any) {
+      // Handle errors from the service
+      let statusCode = HttpStatusCode.BAD_REQUEST;
+      let message = error.message || 'An error occurred';
+
+      if (error.message === 'Doctor not found') {
+        statusCode = HttpStatusCode.NOT_FOUND;
+        message = 'Doctor not found';
+      } else if (error.message === 'Token has expired') {
+        statusCode = HttpStatusCode.GONE; // 410 for expired tokens
+        message = 'The reset token has expired';
+      } else if (error.message === 'Invalid token') {
+        statusCode = HttpStatusCode.BAD_REQUEST;
+        message = 'The reset token is invalid';
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        message,
+      });
     }
   }
-
 
 
 }
