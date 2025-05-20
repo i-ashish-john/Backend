@@ -106,6 +106,7 @@ export class AuthController implements IAuthController {
           username: user.username,
           email: user.email,
           role: user.role,
+          blocked: user.blocked,
           accessToken: accessToken // Include token in response body as well
         }
       });

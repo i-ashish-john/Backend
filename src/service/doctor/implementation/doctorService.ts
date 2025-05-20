@@ -130,38 +130,51 @@ export class DoctorService implements IDoctorService {
       name,        
       email,
       password: hashedPassword,
+      role: 'doctor',
     };
     console.log('details----->>',doctor)
     const newDoctor = await this.doctorRepository.create(doctor);
 
-    const accessToken = jwt.sign({ id: newDoctor._id }, process.env.JWT_SECRET!, { expiresIn: '5m' });
-    const refreshToken = jwt.sign({ id: newDoctor._id }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
-      
+    const accessToken = jwt.sign({ id: newDoctor._id, role: newDoctor.role }, process.env.JWT_SECRET!, { expiresIn: '5m' });
+    const refreshToken = jwt.sign({ id: newDoctor._id, role: newDoctor.role }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
+
     return {
       success: true,
       message: 'Doctor registered successfully',
-      data: { id: newDoctor._id, email: newDoctor.email },
+      data: {
+        id: newDoctor._id,
+        name: newDoctor.name,
+        email: newDoctor.email,
+        role: newDoctor.role, // Role included in response
+      },
       accessToken,
       refreshToken,
     };
   }
 
   async loginDoctor(email: string, password: string): Promise<AuthResponse> {
-    console.log('Reached in login ---->');
-    
     const doctor = await this.doctorRepository.findByEmail(email);
     if (!doctor) throw new Error('Doctor not found');
 
     const isMatch = await bcrypt.compare(password, doctor.password);
     if (!isMatch) throw new Error('Invalid password');
 
-    const accessToken = jwt.sign({ id: doctor._id }, process.env.JWT_SECRET!, { expiresIn: '5m' });
-    const refreshToken = jwt.sign({ id: doctor._id }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
+const accessToken = jwt.sign(
+  { id: doctor._id, role: doctor.role },
+  process.env.JWT_SECRET!,
+  { expiresIn: '1h' } // Set to 1 hour
+);
+const refreshToken = jwt.sign({ id: doctor._id, role: doctor.role }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
 
     return {
       success: true,
       message: 'Login successful',
-      data: { id: doctor._id, email: doctor.email },
+      data: {
+        id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        role: doctor.role, // Role included in response
+      },
       accessToken,
       refreshToken,
     };

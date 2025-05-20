@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -8,14 +9,14 @@ import { connectRedis } from "../src/config/redisConfig";
 
 import user from "../src/Routes/patient/patientApi";
 import doctor from "../src/Routes/doctor/doctorApi";
-
+import adminRoutes from "../src/Routes/admin/adminApi"
 // import doctorRoutes from "../src/Routes/doctor/doctor"; 
 // import adminRoutes from "./Routes/admin/admin";
 import { errorHandler } from "./middleware/errorMiddleware";
 
 import { morganLogger } from './middleware/loggerMiddleware';
 
-dotenv.config();
+  dotenv.config();
 
 
       const app: Application = express();
@@ -44,7 +45,7 @@ dotenv.config();
       
             app.use("/api", user);
           app.use("/api/doctor", doctor);
-          // app.use("/api/admin", adminRoutes);
+          app.use("/api/admin", adminRoutes);
 
 
 app.use(errorHandler);

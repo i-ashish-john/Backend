@@ -105,25 +105,18 @@ export class DoctorController implements IDoctorController {
   //     res.status(401).json({ message: error.message });
   //   }
   // }
-  async login(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body;
-      const result = await this.doctorService.loginDoctor(email, password);
   
-      res.cookie('accessToken', result.accessToken, { httpOnly: true, secure: process.env.NODE_ENV==='production', maxAge:5*60*1000 });
-      await redisClient.setEx(`refreshToken:${result.data.id}`, 7*24*60*60, result.refreshToken);
-  
-      res.status(HttpStatusCode.OK).json({
-        success: true,
-        message: 'Login successful',
-        data: result.data,         
-        accessToken: result.accessToken,
-      });
-    } catch (error: any) {
-      res.status(HttpStatusCode.UNAUTHORIZED).json({ success: false, message: error.message });
-    }
+ async login(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, password } = req.body;
+    const result = await this.doctorService.loginDoctor(email, password);
+    // Remove cookie setting
+    await redisClient.setEx(`refreshToken:${result.data.id}`, 7 * 24 * 60 * 60, result.refreshToken);
+    res.status(HttpStatusCode.OK).json({ success: true, message: 'Login successful', data: result.data, accessToken: result.accessToken });
+  } catch (error: any) {
+    res.status(HttpStatusCode.UNAUTHORIZED).json({ success: false, message: error.message });
   }
-
+}
   async logout(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.id; // Assumed from auth middleware

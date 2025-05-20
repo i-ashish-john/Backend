@@ -11,7 +11,7 @@ export interface Iuser extends Document {
   email: string;
   password: string;
   role: 'patient' | 'doctor' | 'admin'; 
-
+  blocked: boolean; // Blocked status
   resetToken?: string; //password reset
   resetTokenExpiresAt?: Date; 
   createdAt: Date;
@@ -39,6 +39,9 @@ const userSchema: Schema = new mongoose.Schema({
            enum: ['patient', 'doctor', 'admin'],
            default: 'patient'// Default role
          }, 
+         
+         blocked: { type: Boolean, default: false },
+
   resetToken: { type: String }, // Store reset token
   resetTokenExpiresAt: { type: Date },// Token expiration
 },
