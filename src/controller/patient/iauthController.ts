@@ -13,4 +13,5 @@ export interface IAuthController {
   verifyResetToken(req: Request, res: Response): Promise<Response>;
   resetPassword(req: Request, res: Response): Promise<Response>;
   
+  getProfile(req: Request, res: Response, next: NextFunction): Promise<Response>;
 }

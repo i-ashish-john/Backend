@@ -39,4 +39,10 @@ router.post('/auth/send-signup-otp', (req, res) => authController.sendSignupOtp(
 router.post('/auth/verify-signup-otp', (req, res) => authController.verifySignupOtp(req, res));
 
 router.post("/auth/resend-signup-otp",(req, res) => authController.resendSignupOtp(req, res));
+
+
+
+router.get("/profile", authenticate, verifyRole(["patient"]), (req, res, next) => authController.getProfile(req, res, next));
+router.put("/profile", authenticate, verifyRole(["patient"]), (req, res, next) => authController.updateProfile(req, res, next));
+
 export default router;

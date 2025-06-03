@@ -37,10 +37,10 @@ export class AuthRepository implements IAuthRepository {
     }
   }
 
-  async findUserById(id: string): Promise<Iuser | null> {
+async findUserById(id: string): Promise<Iuser | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) return null;
-      return await User.findById(id);
+      return await User.findById(id).select("-password -blocked -resetToken -resetTokenExpiresAt");
     } catch (error: any) {
       throw { 
         message: error.message, 
@@ -48,7 +48,6 @@ export class AuthRepository implements IAuthRepository {
       };
     }     
   }
-
   async updateUser(id: string, updateData: Partial<IuserInput>): Promise<Iuser | null> {
     try {
       if (updateData.password) delete updateData.password;

@@ -132,20 +132,23 @@ export class DoctorController implements IDoctorController {
     }
   }
 
-  async getMe(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        res.status(HttpStatusCode.UNAUTHORIZED).json({ message: 'Unauthorized' });
-        return;
-      }
-      const user = await this.doctorService.getCurrentDoctor(userId);
-      res.status(HttpStatusCode.OK).json({ user, message: 'User details retrieved' });
-    } catch (error: any) {
-      res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ message: error.message });
+async getMe(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(HttpStatusCode.UNAUTHORIZED).json({ success: false, message: 'Unauthorized' });
+      return;
     }
+    const user = await this.doctorService.getCurrentDoctor(userId);
+    if (user.blocked) {
+      res.status(HttpStatusCode.FORBIDDEN).json({ success: false, message: 'You are blocked by admin' });
+      return;
+    }
+    res.status(HttpStatusCode.OK).json({ success: true, data: user, message: 'User details retrieved' });
+  } catch (error: any) {
+    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
   }
-
+}
 
   async forgotPassword(req: Request, res: Response): Promise<void> {
     try {
