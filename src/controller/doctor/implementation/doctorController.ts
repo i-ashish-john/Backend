@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { IDoctorController } from '../../../controller/doctor/idoctorController';
 
 import { DoctorService } from '../../../service/doctor/implementation/doctorService'; 
@@ -11,7 +11,7 @@ import { ITokenRepository } from '../../../repository/doctor/itokenRepository';
 
 import { doctorSignupSchema } from '../../../lib/validations/doctorValidation'; 
 import {redisClient} from '../../../config/redisConfig'; 
-import { HttpStatusCode } from '../../../config/ HttpStatusCode.enum';
+import { HttpStatusCode } from '../../../config/HttpStatusCode.enum';
 
 export class DoctorController implements IDoctorController {
   private doctorService: DoctorService;
@@ -35,13 +35,14 @@ export class DoctorController implements IDoctorController {
 
   async sendSignupOTP(req: Request, res: Response): Promise<void> {
     try { 
-      const { email, name, password } = req.body;
-      console.log('HHHHHHH',req.body)
-      if (!email || !name || !password) {
-        res.status(400).json({ success: false, message: 'Email, name, and password are required' });
+      const { email, name, password, licenseNumber, specialization } = req.body;
+      console.log('HHHHHHH', req.body);
+      if (!email || !name || !password || !licenseNumber || !specialization) {
+        res.status(400).json({ success: false, message: 'Email, name, password, license number, and specialization are required' });
         return;
       }
-      const formData = { name, email, password };
+      const formData = { name, email, password, licenseNumber, specialization };
+      
       const result = await this.doctorService.sendSignupOTP(email, formData);
       res.status(HttpStatusCode.OK).json(result);
     } catch (error: any) {
@@ -132,21 +133,22 @@ export class DoctorController implements IDoctorController {
     }
   }
 
-async getMe(req: Request, res: Response): Promise<void> {
+async getMe(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      res.status(HttpStatusCode.UNAUTHORIZED).json({ success: false, message: 'Unauthorized' });
-      return;
+    console.log('getMe: User from middleware', req.user); 
+    if (!req.user || !req.user.id) {
+      throw new Error('User not found in request');
     }
-    const user = await this.doctorService.getCurrentDoctor(userId);
-    if (user.blocked) {
-      res.status(HttpStatusCode.FORBIDDEN).json({ success: false, message: 'You are blocked by admin' });
-      return;
-    }
-    res.status(HttpStatusCode.OK).json({ success: true, data: user, message: 'User details retrieved' });
+    const doctor = await this.doctorService.getCurrentDoctor(req.user.id);
+    console.log('getMe: Doctor data to return', doctor); // Debug log
+  
+    res.status(200).json({
+      success: true,
+      message: 'Doctor fetched successfully',
+      data: doctor,
+    });
   } catch (error: any) {
-    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+    next(error);
   }
 }
 
@@ -209,5 +211,23 @@ async getMe(req: Request, res: Response): Promise<void> {
     }
   }
 
+async updateProfile(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(HttpStatusCode.UNAUTHORIZED).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const { name, specialization } = req.body;
+    if (!name || !specialization) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({ success: false, message: 'Name and specialization are required' });
+      return;
+    }
+    const updatedDoctor = await this.doctorService.updateDoctorProfile(userId, { name, specialization });
+    res.status(HttpStatusCode.OK).json({ success: true, data: updatedDoctor, message: 'Profile updated successfully' });
+  } catch (error: any) {
+    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+  }
+}
 
 }

@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { HttpStatusCode } from '../../config/ HttpStatusCode.enum';
+import { HttpStatusCode } from '../../config/HttpStatusCode.enum';
 import { AuthenticatedRequest } from './authenticate';
 
 export const verifyRole = (allowedRoles: string[]): RequestHandler => {

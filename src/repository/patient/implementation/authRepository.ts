@@ -1,7 +1,7 @@
 import { IAuthRepository } from "../iauthRepository";
 import User, { Iuser, IuserInput } from "../../../model/userModel";
 import mongoose from "mongoose";
-import { HttpStatusCode } from "../../../config/ HttpStatusCode.enum";
+import { HttpStatusCode } from "../../../config/HttpStatusCode.enum";
 
 export class AuthRepository implements IAuthRepository {
   async createUser(userData: IuserInput): Promise<Iuser> {

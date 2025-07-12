@@ -16,6 +16,33 @@ import { errorHandler } from "./middleware/errorMiddleware";
 
 import { morganLogger } from './middleware/loggerMiddleware';
 
+import Doctor from './model/doctorModel';
+
+// Add this after connectDB()
+const updateExistingDoctors = async () => {
+  try {
+    await Doctor.updateMany(
+      { specialization: { $exists: false } },
+      { $set: { specialization: "General Practice" } }
+    );
+    await Doctor.updateMany(
+      { licenseNumber: { $exists: false } },
+      { $set: { licenseNumber: `TEMP-LICENSE-${Date.now()}` } }
+    );
+    console.log('Updated existing doctors with default specialization and licenseNumber');
+  } catch (error) {
+    console.error('Error updating existing doctors:', error);
+  }
+};
+
+// Run this after connecting to the database
+connectDB().then(() => {
+  updateExistingDoctors();
+});
+
+
+
+
   dotenv.config();
 
 

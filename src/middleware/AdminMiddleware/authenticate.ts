@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
-import { HttpStatusCode } from '../../config/ HttpStatusCode.enum';
+import { HttpStatusCode } from '../../config/HttpStatusCode.enum';
 
 export interface AuthenticatedRequest {
   user?: { id: string; role: string };

@@ -26,7 +26,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   try {
     // Check for Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer')) {
+      console.log(true)
       return res.status(401).json({ success: false, message: 'No token provided' });
     }
 

@@ -1,6 +1,6 @@
 import { IAuthRepository } from "../../../repository/patient/iauthRepository";
 import { ITokenRepository } from "../../../repository/patient/itokenRepository";
-import { HttpStatusCode } from "../../../config/ HttpStatusCode.enum";
+import { HttpStatusCode } from "../../../config/HttpStatusCode.enum";
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';

@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export interface IDoctorController {
   signup(req: Request, res: Response): Promise<void>;
   login(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
-  getMe(req: Request, res: Response): Promise<void>;
+  getMe(req: Request, res: Response, next: NextFunction): Promise<void>;
 
   sendSignupOTP(req: Request, res: Response): Promise<void>;
   resendSignupOTP(req: Request, res: Response): Promise<void>;
@@ -13,4 +13,5 @@ export interface IDoctorController {
   forgotPassword(req: Request, res: Response): Promise<void>;
   resetPassword(req: Request, res: Response): Promise<void>;
 
+  updateProfile(req: Request, res: Response): Promise<void>; 
 }

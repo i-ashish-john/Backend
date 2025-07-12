@@ -25,4 +25,8 @@ export class DoctorRepository implements IDoctorRepository {
     await Doctor.findByIdAndUpdate(id, { password: hashed }).exec();
   }
   
+  async update(doctor: IDoctor): Promise<IDoctor> {
+  return await doctor.save();
+}
+
 }

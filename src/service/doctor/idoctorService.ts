@@ -4,8 +4,9 @@ export interface SignupData {
   name: string;
   email: string;
   password: string;
+  licenseNumber: string;
+  specialization: string;
 }
-
 export interface AuthResponse {
   success: boolean;
   message: string;

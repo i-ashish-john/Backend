@@ -5,7 +5,7 @@ import { IuserInput, Iuser } from "../../../model/userModel";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-import { HttpStatusCode } from "../../../config/ HttpStatusCode.enum";
+import { HttpStatusCode } from "../../../config/HttpStatusCode.enum";
 
 
 export class AuthService implements IAuthService {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { IAuthController } from "../iauthController";
 import { IAuthService } from "../../../service/patient/iauthService";
-import { HttpStatusCode } from "../../../config/ HttpStatusCode.enum";
+import { HttpStatusCode } from "../../../config/HttpStatusCode.enum";
 import { PasswordResetService } from "../../../service/patient/implementation/passwordResetService";
 import { AuthRepository } from "../../../repository/patient/implementation/authRepository";
 import { TokenRepository } from "../../../repository/patient/implementation/tokenRepository";
@@ -55,6 +55,7 @@ export class AuthController implements IAuthController {
 
   async login(req: Request, res: Response, next: NextFunction): Promise<Response> {
     try {
+      // console.log(`THe complete details ${req.body}`)
       const { email, password } = req.body;
       
       if (!email || !password) {
@@ -178,7 +179,7 @@ export class AuthController implements IAuthController {
     }
   }
 
-  async getMe(req: Request, res: Response, next: NextFunction): Promise<Response> {
+  async getMe(req: Request, res: Response, next: NextFunction): Promise<Response> {// checking patient blocked 
     try {
       console.log("Reached /auth/me with user:", req.user);
       const userId = req.user?.id;

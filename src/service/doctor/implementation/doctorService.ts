@@ -116,41 +116,52 @@ export class DoctorService implements IDoctorService {
       throw new Error(error.message || 'OTP verification failed');
     }
   }
-  async registerDoctor(doctorData: SignupData): Promise<AuthResponse> {
-    const { name, email, password } = doctorData;
+ async registerDoctor(doctorData: SignupData): Promise<AuthResponse> {
+  const { name, email, password, specialization, licenseNumber } = doctorData;
 
-    const existingDoctor = await this.doctorRepository.findByEmail(email);
-    if (existingDoctor) throw new Error('Email already registered');
+  const existingDoctor = await this.doctorRepository.findByEmail(email);
+  if (existingDoctor) throw new Error('Email already registered');
 
-    // Hash the password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const existingLicense = await this.doctorRepository.findByLicense(licenseNumber);
+  if (existingLicense) throw new Error('License number already in use');
 
-    const doctor: Partial<IDoctor> = {
-      name,        
-      email,
-      password: hashedPassword,
-      role: 'doctor',
-    };
-    console.log('details----->>',doctor)
-    const newDoctor = await this.doctorRepository.create(doctor);
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const accessToken = jwt.sign({ id: newDoctor._id, role: newDoctor.role }, process.env.JWT_SECRET!, { expiresIn: '5m' });
-    const refreshToken = jwt.sign({ id: newDoctor._id, role: newDoctor.role }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
+  const doctor: Partial<IDoctor> = {
+    name,
+    email,
+    password: hashedPassword,
+    specialization,
+    licenseNumber,
+    role: 'doctor',
+  };
+  const newDoctor = await this.doctorRepository.create(doctor);
 
-    return {
-      success: true,
-      message: 'Doctor registered successfully',
-      data: {
-        id: newDoctor._id,
-        name: newDoctor.name,
-        email: newDoctor.email,
-        role: newDoctor.role, // Role included in response
-      },
-      accessToken,
-      refreshToken,
-    };
-  }
+  const accessToken = jwt.sign({ id: newDoctor._id, role: newDoctor.role }, process.env.JWT_SECRET!, { expiresIn: '5m' });
+  const refreshToken = jwt.sign({ id: newDoctor._id, role: newDoctor.role }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
+
+  return {
+    success: true,
+    message: 'Doctor registered successfully',
+    data: {
+      id: newDoctor._id,
+      name: newDoctor.name,
+      email: newDoctor.email,
+      role: newDoctor.role,
+    },
+    accessToken,
+    refreshToken,
+  };
+}
+
+async updateDoctorProfile(userId: string, updateData: { name: string; specialization: string }): Promise<IDoctor> {
+  const doctor = await this.doctorRepository.findById(userId);
+  if (!doctor) throw new Error('Doctor not found');
+  doctor.name = updateData.name;
+  doctor.specialization = updateData.specialization;
+  return await this.doctorRepository.update(doctor);
+}
 
   async loginDoctor(email: string, password: string): Promise<AuthResponse> {
     const doctor = await this.doctorRepository.findByEmail(email);
@@ -184,11 +195,13 @@ const refreshToken = jwt.sign({ id: doctor._id, role: doctor.role }, process.env
     await redisClient.del(`refreshToken:${userId}`);
   }
 
-  async getCurrentDoctor(userId: string): Promise<IDoctor> {
-    const doctor = await this.doctorRepository.findById(userId);
-    if (!doctor) throw new Error('Doctor not found');
-    return doctor;
-  }
+async getCurrentDoctor(userId: string): Promise<IDoctor> {
+  const doctor = await this.doctorRepository.findById(userId);
+  if (!doctor) throw new Error('Doctor not found');
+  if (doctor.blocked) throw new Error('blocked');
+  console.log('doctorService: Doctor object before return', doctor); // Debug log
+  return doctor;
+}
 
   async sendResetToken(email: string): Promise<void> {
     const doctor = await this.doctorRepository.findByEmail(email);

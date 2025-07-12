@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AdminService } from '../../../service/admin/implementation/adminService';
-import { HttpStatusCode } from '../../../config/ HttpStatusCode.enum';
+import { HttpStatusCode } from '../../../config/HttpStatusCode.enum';
 // import jwt from 'jsonwebtoken';
 // import Admin from '../../../model/adminModel';
 import Patient from '../../../model/userModel'; // Assuming you have a Patient model
@@ -18,9 +18,7 @@ export class AdminController {
 
     const { admin, accessToken } = await this.adminService.loginAdmin(email, password);
     // set HTTP-only cookie
-    res.setHeader('Set-Cookie', cookie.serialize('adminAccessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+    res.setHeader('Set-Cookie', cookie.serialize('adminAccessToken', accessToken, {httpOnly: true,secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60,

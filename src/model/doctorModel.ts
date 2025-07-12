@@ -6,11 +6,9 @@ export interface IDoctor extends Document {
   password: string;
   _id: string;
   role: 'doctor';
-  blocked: boolean; // Blocked status
-  // specialization: string;
-  // licenseNumber: string;
-  // phoneNumber?: string;
-  // address?: string;
+  blocked: boolean;
+  specialization: string;
+  licenseNumber: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,9 +17,10 @@ const DoctorSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['doctor'], default: 'doctor' }, // Default role for doctors
+  role: { type: String, enum: ['doctor'], default: 'doctor' },
   blocked: { type: Boolean, default: false },
-
+  specialization: { type: String, required: true },
+  licenseNumber: { type: String, required: true, unique: true },
 }, { timestamps: true });
 
 export default mongoose.model<IDoctor>('Doctor', DoctorSchema);
